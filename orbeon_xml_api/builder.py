@@ -2,11 +2,12 @@ from lxml import etree
 
 import xmltodict
 
-from controls import StringControl, DateControl, TimeControl, DateTimeControl, \
+from .controls import StringControl, DateControl, TimeControl, DateTimeControl, \
     BooleanControl, AnyUriControl, EmailControl, DecimalControl, \
     Select1Control, OpenSelect1Control, SelectControl, ImageAnnotationControl
-from utils import generate_xml_root, unaccent_unicode
-
+from .utils import generate_xml_root, unaccent_unicode
+import logging
+_logger = logging.getLogger(__name__)
 # `xforms:` types are here for backwards compatibility.
 XF_TYPE_CONTROL = {
     'xf:string': StringControl,
@@ -135,16 +136,18 @@ class Builder:
 
             if control is not None:
                 self.controls[bind.name] = control
+                
 
     def set_sanitized_control_names(self):
         for name in self.controls.keys():
             if name is None:
                 continue
-
-            k = name
+            #had to decode these RisteCona
+            k = name.decode()
             k = k.replace('-', '')
             k = k.replace('.', '_')
             self.sanitized_control_names[k] = name
+            
 
     def set_control_objects(self, control_objects):
         for k, v in control_objects.items():
@@ -160,6 +163,7 @@ class Builder:
         for root_el in res:
             for element in root_el.iter():
                 self._form[element.tag] = element
+                
 
     def add_control_object(self, name, control_obj):
         supported = False
@@ -242,6 +246,7 @@ class Bind:
         if fr_control_tag in ('select1', 'dropdown-select1'):
             if self.builder._control_objects.get('Select1Control', False):
                 return self.builder._control_objects.get('Select1Control')(self.builder, self, element)
+
             else:
                 return Select1Control(self.builder, self, element)
 

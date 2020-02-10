@@ -1,7 +1,14 @@
+# -*- coding: utf-8 -*-
+# Copyright 2017-2018 Bob Leers (http://www.novacode.nl)
+# See LICENSE file for full licensing details.
+
 from datetime import datetime, time
 from lxml import etree
-
+import logging
 import xmltodict
+import warnings
+
+_logger = logging.getLogger(__name__)
 
 
 class ResourceElement(object):
@@ -79,10 +86,11 @@ class Control(object):
             return
 
         # TODO namespace prefix Error
-        # query = "//xf:model/xf:instance/form/%s/%s" % (
+        #had to decode python3 error was showing RisteCona
+
         query = "//form/%s/%s" % (
-            self._bind.parent.name,
-            self._bind.name
+            self._bind.parent.name.decode(),
+            self._bind.name.decode()
         )
 
         res = self._builder.xml_root.xpath(query)
@@ -277,7 +285,7 @@ class Select1Control(StringControl):
 
         for item in self._resource.element['item']:
             # XXX Seems a buggy assumption. Things like 'label'.
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 continue
             elif item['value'] == self.choice_value:
                 self.choice_label = item['label']
@@ -313,7 +321,7 @@ class SelectControl(StringControl):
             label = None
             value = None
 
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 if item == 'label':
                     label = item
                 if item == 'value':
@@ -359,7 +367,7 @@ class AnyUriControl(Control):
         self._raw_value = self._element.text
 
     def decode(self, element):
-        # TODO: Quick and dirty, I don't like it! (Because of deadline).
+        # TODO: Quick and dirty, filthy too :D I don't like it! (Because of deadline).
         # This needs to be revised!
         if element is None or not hasattr(element, 'text') or element.text is None:
             res = {'uri': None, 'value': None, 'element': None}
